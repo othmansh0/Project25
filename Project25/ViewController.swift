@@ -17,20 +17,58 @@
 
  We're going to use all four of them in our app, but only three need to be properties.
  
+ ------------------------------------------------------------------------------------------
+ all multipeer services on iOS must declare a service type, which is a 15-digit string that uniquely identify your service. Those 15 digits can contain only the letters A-Z, numbers and hyphens, and it's usually preferred to include your company in there somehow
+ 
+ This service type is used by both MCAdvertiserAssistant and MCBrowserViewController to make sure your users only see other users of the same app. They both also want a reference to your MCSession instance so they can take care of connections for you
+ ------------------------------------------------------------------------------------------
+ 
+ 
  */
 
 
-
+import MultipeerConnectivity
 import UIKit
 
-class ViewController: UICollectionViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+class ViewController: UICollectionViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate,MCSessionDelegate,MCBrowserViewControllerDelegate {
     var images = [UIImage]()
+    
+    var peerID = MCPeerID(displayName: UIDevice.current.name)
+    var mcSession: MCSession?
+    var mcAdvertiserAssistant: MCAdvertiserAssistant?
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Selfie Shate"
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(importPicture))
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(showConnectionPrompt))
+        
+        
+        // peer ID is used to create the session, along with the encryption option of .required
+        mcSession = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
+        //tell us when something happens
+        mcSession.delegate = self
+        
+    }
+    //MARK: - Start Hosting
+    func startHosting(action: UIAlertAction) {
+        guard let mcSession = mcSession else { return }
+        //Used when creating a session, telling others that we exist and handling invitations
+        mcAdvertiserAssistant = MCAdvertiserAssistant(serviceType: "hws-project25", discoveryInfo: nil, session: mcSession)
+        
+    }
+    //MARK: - Join Session
+    
+    func joinSession(action: UIAlertAction) {
+        guard let mcSession = mcSession else { return }
+        
+        //used when looking for sessions, showing users who is nearby and letting them join
+        let mcBrowser = MCBrowserViewController(serviceType: "hws-project25", session: mcSession)
+        mcBrowser.delegate = self
+        present(mcBrowser, animated: true)
+        
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
