@@ -34,7 +34,7 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
     var images = [UIImage]()
     
     var peerID = MCPeerID(displayName: UIDevice.current.name)
-    var mcSession: MCSession?
+    var mcSession: MCSession!
     var mcAdvertiserAssistant: MCAdvertiserAssistant?
     
     
@@ -92,6 +92,8 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
         dismiss(animated: true)
         images.insert(image, at: 0)
         collectionView.reloadData()
+        
+        // we're going to add some code to the image picker's didFinishPickingMediaWithInfo method so that when an image is added it also gets sent out to peers.
     }
     
     
@@ -112,5 +114,60 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
         ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(ac, animated: true )
     }
+    
+    //to silent errors,required for protcol
+    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
+        
+    }
+    
+    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {
+        
+    }
+    
+    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
+        
+    }
+    
+    //for multipeer browser
+    //called when it finishes successfully
+    func browserViewControllerDidFinish(_ browserViewController: MCBrowserViewController) {
+        dismiss(animated: true)
+    }
+    // called when user cancels
+    func browserViewControllerWasCancelled(_ browserViewController: MCBrowserViewController) {
+        dismiss(animated: true)
+    }
+
+    
+    //When a user connects or disconnects from our session, the method session(_:peer:didChangeState:) is called so you know what's changed – is someone connecting, are they now connected, or have they just disconnected?
+    //useful for debugging
+    
+    
+    //When this method is called, you'll be told what peer changed state, and what their new state is. There are only three possible session states: not connected, connecting, and connected
+    
+    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        switch state {
+        case .connected:
+            print("Connected: \(peerID.displayName)")
+        case .connecting:
+            print("Connecting: \(peerID.displayName)")
+        case .connected:
+            print("Not Connected: \(peerID.displayName)")
+            
+        @unknown default:
+            print("unknown state received \(peerID.displayName)")
+        }
+    }
+    
+    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        DispatchQueue.main.async { [weak self] in
+            if let image = UIImage(data: data) {
+                self?.images.insert(image, at: 0)
+                self?.collectionView.reloadData()
+            }
+            
+        }
+    }
+    
 }
 
