@@ -30,12 +30,18 @@
 import MultipeerConnectivity
 import UIKit
 
-class ViewController: UICollectionViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate,MCSessionDelegate,MCBrowserViewControllerDelegate {
+class ViewController: UICollectionViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate,MCSessionDelegate,MCBrowserViewControllerDelegate,MCNearbyServiceAdvertiserDelegate {
+    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+     
+               invitationHandler(true,mcSession)
+           
+    }
+    
     var images = [UIImage]()
     
     var peerID = MCPeerID(displayName: UIDevice.current.name)
     var mcSession: MCSession!
-    var mcAdvertiserAssistant: MCAdvertiserAssistant?
+    var mcAdAssistant: MCNearbyServiceAdvertiser?//updated
     
     
     override func viewDidLoad() {
@@ -56,9 +62,9 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
     func startHosting(action: UIAlertAction) {
         guard let mcSession = mcSession else { return }
         //Used when creating a session, telling others that we exist and handling invitations
-        mcAdvertiserAssistant = MCAdvertiserAssistant(serviceType: "hws-project25", discoveryInfo: nil, session: mcSession)
+        mcAdAssistant = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: "hws-project25")//updated
     
-        mcAdvertiserAssistant?.start()
+        mcAdAssistant?.startAdvertisingPeer()//updated
     }
     //MARK: - Join Session
     
@@ -67,7 +73,7 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
         
         //used when looking for sessions, showing users who is nearby and letting them join
         let mcBrowser = MCBrowserViewController(serviceType: "hws-project25", session: mcSession)
-        mcBrowser.delegate = self
+        mcAdAssistant?.delegate = self
         present(mcBrowser, animated: true)
         
     }
@@ -178,7 +184,7 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
             print("Connecting: \(peerID.displayName)")
         case .connected:
             print("Not Connected: \(peerID.displayName)")
-            
+        
         @unknown default:
             print("unknown state received \(peerID.displayName)")
         }
@@ -193,6 +199,8 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
             
         }
     }
+    
+    
     
 }
 
