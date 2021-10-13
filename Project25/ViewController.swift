@@ -57,7 +57,8 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
         guard let mcSession = mcSession else { return }
         //Used when creating a session, telling others that we exist and handling invitations
         mcAdvertiserAssistant = MCAdvertiserAssistant(serviceType: "hws-project25", discoveryInfo: nil, session: mcSession)
-        
+    
+        mcAdvertiserAssistant?.start()
     }
     //MARK: - Join Session
     
@@ -94,6 +95,30 @@ class ViewController: UICollectionViewController, UINavigationControllerDelegate
         collectionView.reloadData()
         
         // we're going to add some code to the image picker's didFinishPickingMediaWithInfo method so that when an image is added it also gets sent out to peers.
+        
+        //1.Check if we have an active session we can use.
+        guard let mcSession = mcSession else { return }
+        //2.Check if there any peers to send data to
+        if mcSession.connectedPeers.count > 0 {
+            //3.convert our image to data object
+            if let imageData = image.pngData() {
+                do {
+                    //4.Send it to all peers,ensuring it gets delivered
+                    try mcSession.send(imageData, toPeers: mcSession.connectedPeers, with: .reliable)
+                } catch  {
+                    //5.show an error message if there's a problem
+                    let ac = UIAlertController(title: "Send error", message: error.localizedDescription, preferredStyle: .alert)
+                    ac.addAction(UIAlertAction(title: "OK", style: .default))
+                    present(ac, animated: true)
+                }
+            }
+        }
+        
+       
+        
+        
+        
+        
     }
     
     
